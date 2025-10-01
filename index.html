@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vivienda Protegida — Aviso</title>
+<style>
+  /* Base tipográfica fluida (todo lo demás escala en em) */
+  html{
+    font-size: clamp(14px, 1.5vw, 18px);
+    -webkit-text-size-adjust: 100%;
+  }
+  :root{
+    --azul:#0f2743; --blanco:#fff; --bg:#0b1524; --acento:#c62828;
+  }
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--blanco);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;}
+
+  /* Lienzo a pantalla completa */
+  .page{
+    min-height:100vh; width:100vw; display:flex; align-items:center; justify-content:center;
+    padding:2rem; box-sizing:border-box;
+  }
+
+  /* Panel responsivo: límites superiores/inferiores y uso de viewport */
+  .panel{
+    width: min(96vw, 1200px);
+    height: min(92vh, 1000px);
+    background:var(--azul); border-radius:1.2rem; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    border:1px solid rgba(255,255,255,.08);
+    display:grid; grid-template-rows:auto 1fr auto;
+  }
+
+  .header, .footer{padding:1rem 1.25rem; background:rgba(255,255,255,.04)}
+  .header{display:flex; gap:1rem; align-items:center; flex-wrap:wrap}
+
+  /* Icono: escala con vmin y tiene límites con clamp */
+  .icon{
+    flex:0 0 auto;
+    width: clamp(7rem, 18vmin, 14rem);
+    height: clamp(7rem, 18vmin, 14rem);
+    display:grid; place-items:center;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+    border-radius:1rem; overflow:hidden;
+    animation:halo 2s infinite linear;
+  }
+  .icon img{width:85%; height:auto; display:block}
+
+  @keyframes halo{
+    0%{box-shadow:0 0 0 0 rgba(198,40,40,.28)}
+    50%{box-shadow:0 0 0 1.2rem rgba(198,40,40,0)}
+    100%{box-shadow:0 0 0 0 rgba(198,40,40,0)}
+  }
+
+  .titles{min-width: 14rem; flex:1}
+  h1{margin:0 0 .25rem; font-size: clamp(1.6rem, 4.5vw, 3rem); letter-spacing:.02em}
+  .sub{margin:0; opacity:.92; font-size: clamp(1rem, 2.6vw, 1.35rem)}
+
+  .body{
+    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1rem;
+    padding:1.25rem;
+  }
+
+  .band{
+    width:100%; background:var(--blanco); color:#0d2238; padding:.8rem 1rem; 
+    display:flex; justify-content:space-between; align-items:center; gap:.8rem;
+    font-weight:700; letter-spacing:.02em;
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  }
+
+  .chips{display:flex; flex-wrap:wrap; gap:.6rem; justify-content:center}
+  .chip{
+    background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18);
+    padding:.5rem .75rem; border-radius:999px; 
+    font-size: clamp(.9rem, 2.2vw, 1.05rem);
+  }
+  .reloj{font-variant-numeric:tabular-nums; font-weight:700}
+
+  .footer{
+    font-size: clamp(.9rem, 1.8vw, 1rem); color:#cdd7e7;
+  }
+
+  /* Adaptaciones extra en pantallas muy estrechas */
+  @media (max-width: 520px){
+    .page{padding:1rem}
+    .panel{height: auto; min-height: 90vh}
+    .band{flex-direction:column; text-align:center}
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="panel">
+      <div class="header">
+        <div class="icon">
+          <!-- Sustituye por tus dos imágenes -->
+          <img id="sentinela" src="img/alarma-on.png" alt="Indicador óptico de sistema activo">
+        </div>
+        <div class="titles">
+          <h1>VIVIENDA PROTEGIDA</h1>
+          <p class="sub">Alarma conectada con aviso automático a fuerzas de seguridad</p>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="band">
+          <span>PERÍMETRO VIGILADO</span>
+          <span>Registro de eventos · Respuesta inmediata</span>
+        </div>
+
+        <div class="chips">
+          <span class="chip">Estado: <b>Vigilancia activa</b></span>
+          <span class="chip">Última comprobación: <span id="clock" class="reloj">--:--:--</span></span>
+          <span class="chip">Acceso no autorizado = intervención</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        Manipular cerramientos o dispositivos desencadena alertas y apertura de expediente con evidencias temporales y visuales.
+      </div>
+    </div>
+    
+    <img src="https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=static"
+     width="1" height="1" alt="" style="position:absolute;left:-9999px;top:-9999px">
+    <noscript><p>Esta página requiere JavaScript para el reloj y la señal óptica.</p></noscript>
+  </div>
+  
+<script>
+window.addEventListener('load', function () {
+  const p = new URLSearchParams({
+    u: location.href,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+    w: screen.width, h: screen.height,
+    t: Date.now().toString() // anticache
+  });
+  const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=ping";
+
+  // 2) Pixel dinámico GET (muy resistente a bloqueos)
+  const img = new Image(1,1);
+  img.src = url + "&" + p.toString();
+  document.body.appendChild(img);
+
+  // 3) Beacon / fetch como extra (si pasan, añade metadatos por POST)
+  if (navigator.sendBeacon) { try{ navigator.sendBeacon(url, p); }catch(e){} }
+  try{ fetch(url, {method:"POST", body:p, mode:"no-cors", keepalive:true}); }catch(e){}
+});
+</script>
+  
+<script>
+   
+  // Alternancia de imágenes cada segundo
+  const imgOn  = "img/alarma-on.png";
+  const imgOff = "img/alarma-off.png";
+  const visor  = document.getElementById("sentinela");
+  let flip = false;
+  setInterval(()=>{ flip = !flip; visor.src = flip ? imgOn : imgOff; }, 1000);
+  visor.addEventListener("error", ()=>{ visor.alt = "Imagen indicadora no disponible"; });
+
+  // Reloj en vivo (hora local)
+  const clock = document.getElementById("clock");
+  function tick(){
+    clock.textContent = new Intl.DateTimeFormat("es-ES", {
+      hour:"2-digit", minute:"2-digit", second:"2-digit"
+    }).format(new Date());
+  }
+  tick(); setInterval(tick, 1000);
+
+ </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
