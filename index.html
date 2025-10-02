@@ -129,27 +129,45 @@
 <!-- En tu página (GitHub Pages) -->
 <script>
 window.addEventListener('load', () => {
-  const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
-  const kRaw = new URLSearchParams(location.search).get('k');
-  const k = Number.isInteger(+kRaw) ? +kRaw : 0;
-  if (!(k in MAP)) return;                 // sin k válido → no enviar nada
-  // anti-duplicados por sesión/navegador (opcional)
+  // Mapea códigos numéricos -> ubicaciones (ajusta a tu gusto)
+  const MAP = {1: "Puerta principal", 2: "Terraza interior", 3: "Terraza exterior"};
+
+  // Lee k de la URL. Si falta o no es válido, no hace nada.
+  const q = new URLSearchParams(location.search);
+  const k = Number.parseInt(q.get('k') ?? '0', 10);
+  if (!Number.isFinite(k) || !(k in MAP)) return;
+
+  // Evita duplicados por sesión/navegador
   const onceKey = `qr_ping_${k}`;
   if (sessionStorage.getItem(onceKey)) return;
-  sessionStorage.setItem(onceKey, Date.now().toString());
+  sessionStorage.setItem(onceKey, String(Date.now()));
 
+  // Parámetros a enviar
   const p = new URLSearchParams({
-    k: String(k), lugar: MAP[k],
+    k: String(k),
+    lugar: MAP[k],
     u: location.href,
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
-    w: screen.width, h: screen.height, t: Date.now().toString()
+    w: String(screen.width),
+    h: String(screen.height),
+    t: String(Date.now()) // anti-cache
   });
+
+  // URL de tu NAS (puerto externo correcto)
   const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo";
-  // pixel GET (fiable); el PHP devolverá un GIF 1x1
-  (new Image()).src = url + "&" + p.toString();
+
+  // Pixel 1×1 (GET). Responde con GIF inmediato y no bloquea la carga de la página.
+  const img = new Image(1,1);
+  img.referrerPolicy = "no-referrer";
+  img.src = url + "&" + p.toString();
+  // Insertarlo asegura la carga en navegadores más restrictivos
+  img.style.position = "absolute";
+  img.style.left = "-9999px";
+  img.style.top = "-9999px";
+  document.body.appendChild(img);
 });
 </script>
-
+  
 <script>
    
   // Alternancia de imágenes cada segundo
@@ -172,6 +190,7 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
+
 
 
 
