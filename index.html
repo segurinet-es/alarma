@@ -126,27 +126,30 @@
     <noscript><p>Esta página requiere JavaScript para el reloj y la señal óptica.</p></noscript>
   </div>
   
+<!-- En tu página (GitHub Pages) -->
 <script>
-window.addEventListener('load', function () {
+window.addEventListener('load', () => {
+  const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
+  const kRaw = new URLSearchParams(location.search).get('k');
+  const k = Number.isInteger(+kRaw) ? +kRaw : 0;
+  if (!(k in MAP)) return;                 // sin k válido → no enviar nada
+  // anti-duplicados por sesión/navegador (opcional)
+  const onceKey = `qr_ping_${k}`;
+  if (sessionStorage.getItem(onceKey)) return;
+  sessionStorage.setItem(onceKey, Date.now().toString());
+
   const p = new URLSearchParams({
+    k: String(k), lugar: MAP[k],
     u: location.href,
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
-    w: screen.width, h: screen.height,
-    t: Date.now().toString() // anticache
+    w: screen.width, h: screen.height, t: Date.now().toString()
   });
-  const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=ping";
-
-  // 2) Pixel dinámico GET (muy resistente a bloqueos)
-  const img = new Image(1,1);
-  img.src = url + "&" + p.toString();
-  document.body.appendChild(img);
-
-  // 3) Beacon / fetch como extra (si pasan, añade metadatos por POST)
-  if (navigator.sendBeacon) { try{ navigator.sendBeacon(url, p); }catch(e){} }
-  try{ fetch(url, {method:"POST", body:p, mode:"no-cors", keepalive:true}); }catch(e){}
+  const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo";
+  // pixel GET (fiable); el PHP devolverá un GIF 1x1
+  (new Image()).src = url + "&" + p.toString();
 });
 </script>
-  
+
 <script>
    
   // Alternancia de imágenes cada segundo
@@ -169,6 +172,7 @@ window.addEventListener('load', function () {
  </script>
 </body>
 </html>
+
 
 
 
