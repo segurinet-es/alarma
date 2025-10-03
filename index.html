@@ -92,31 +92,41 @@
 <body>
 
 <script>
-// Oculta todo por defecto (evita que se vea nada si no pasa el filtro)
+// Oculta hasta validar (opcional)
 document.documentElement.style.visibility = "hidden";
 
-// --- Reglas ---
-const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"}; // ajusta
-const q = new URLSearchParams(location.search);
-const k = Number.parseInt(q.get('k') ?? '0', 10);
+window.addEventListener('load', () => {
+  // --- Config ---
+  const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
+  const ENDPOINT = "https://jcb.dynip.org:54443/w/log.php?token=TU_SECRETO";
 
-// “Móvil” (teléfono): permite Android/iPhone/Windows Phone y excluye tablets habituales
-const ua = navigator.userAgent || "";
-const looksPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
+  // --- Parámetros de la URL ---
+  const qs = new URLSearchParams(location.search);
+  const k = Number.parseInt(qs.get('k') ?? '0', 10);
+  const debugBypass = (qs.get('debug') === '1'); // <-- BYPASS de duplicados
 
-// Si falta k o no es móvil → cortar inmediatamente y no mostrar nada
-if (!Number.isFinite(k) || !(k in MAP) || !looksPhone) {
-  // Opción A: ir a una página neutra
-  location.replace("about:blank"); // o "https://www.github.com/"
-  throw new Error("Blocked by client filter");
-}
+  // --- Filtro "solo móvil" + k válido ---
+  const ua = navigator.userAgent || "";
+  const isPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
+  if (!Number.isFinite(k) || !(k in MAP) || !isPhone) {
+    // corta y no muestra la página
+    location.replace("about:blank");
+    return;
+  }
 
-// Evitar duplicados por sesión/navegador
-const onceKey = `qr_ping_${k}`;
-if (!sessionStorage.getItem(onceKey)) {
-  sessionStorage.setItem(onceKey, String(Date.now()));
+  // --- Anti-duplicados con bypass de pruebas (?debug=1) ---
+  const onceKey = `qr_ping_${k}`;
+  if (!debugBypass) {
+    const prev = Number(sessionStorage.getItem(onceKey) || 0);
+    const TTL  = 10*60*1000; // 10 minutos; ajusta o elimina si no lo quieres
+    if (prev && (Date.now() - prev) < TTL) {
+      document.documentElement.style.visibility = "visible";
+      return; // dentro de ventana → no enviar
+    }
+    sessionStorage.setItem(onceKey, String(Date.now()));
+  }
 
-  // Enviar píxel SOLO si pasó el filtro
+  // --- Envío del píxel (GET) ---
   const p = new URLSearchParams({
     k: String(k),
     lugar: MAP[k],
@@ -124,18 +134,18 @@ if (!sessionStorage.getItem(onceKey)) {
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
     w: String(screen.width),
     h: String(screen.height),
-    t: String(Date.now())
+    t: String(Date.now()) // anticache
   });
-  const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo";
   const img = new Image(1,1);
-  img.src = url + "&" + p.toString();
+  img.src = ENDPOINT + "&" + p.toString();   // sin referrerPolicy → llegará Referer
   img.style.position="absolute"; img.style.left="-9999px"; img.style.top="-9999px";
   document.body.appendChild(img);
-}
 
-// Si hemos llegado hasta aquí, permitimos mostrar la página
-document.documentElement.style.visibility = "visible";
+  // Mostrar la página tras pasar filtros
+  document.documentElement.style.visibility = "visible";
+});
 </script>
+
   
   <div class="page">
     <div class="panel">
@@ -195,6 +205,7 @@ document.documentElement.style.visibility = "visible";
  </script>
 </body>
 </html>
+
 
 
 
