@@ -90,6 +90,53 @@
 </style>
 </head>
 <body>
+
+<script>
+// Oculta todo por defecto (evita que se vea nada si no pasa el filtro)
+document.documentElement.style.visibility = "hidden";
+
+// --- Reglas ---
+const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"}; // ajusta
+const q = new URLSearchParams(location.search);
+const k = Number.parseInt(q.get('k') ?? '0', 10);
+
+// “Móvil” (teléfono): permite Android/iPhone/Windows Phone y excluye tablets habituales
+const ua = navigator.userAgent || "";
+const looksPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
+
+// Si falta k o no es móvil → cortar inmediatamente y no mostrar nada
+if (!Number.isFinite(k) || !(k in MAP) || !looksPhone) {
+  // Opción A: ir a una página neutra
+  location.replace("about:blank"); // o "https://www.github.com/"
+  throw new Error("Blocked by client filter");
+}
+
+// Evitar duplicados por sesión/navegador
+const onceKey = `qr_ping_${k}`;
+if (!sessionStorage.getItem(onceKey)) {
+  sessionStorage.setItem(onceKey, String(Date.now()));
+
+  // Enviar píxel SOLO si pasó el filtro
+  const p = new URLSearchParams({
+    k: String(k),
+    lugar: MAP[k],
+    u: location.href,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+    w: String(screen.width),
+    h: String(screen.height),
+    t: String(Date.now())
+  });
+  const url = "https://jcb.dynip.org:54443/w/log.php?token=TU_SECRETO";
+  const img = new Image(1,1);
+  img.src = url + "&" + p.toString();
+  img.style.position="absolute"; img.style.left="-9999px"; img.style.top="-9999px";
+  document.body.appendChild(img);
+}
+
+// Si hemos llegado hasta aquí, permitimos mostrar la página
+document.documentElement.style.visibility = "visible";
+</script>
+  
   <div class="page">
     <div class="panel">
       <div class="header">
@@ -126,48 +173,6 @@
     <noscript><p>Esta página requiere JavaScript para el reloj y la señal óptica.</p></noscript>
   </div>
   
-<!-- En tu página (GitHub Pages) -->
-<script>
-window.addEventListener('load', () => {
-  // Mapea códigos numéricos -> ubicaciones (ajusta a tu gusto)
-  const MAP = {1: "Puerta principal", 2: "Terraza interior", 3: "Terraza exterior"};
-
-  // Lee k de la URL. Si falta o no es válido, no hace nada.
-  const q = new URLSearchParams(location.search);
-  const k = Number.parseInt(q.get('k') ?? '0', 10);
-  if (!Number.isFinite(k) || !(k in MAP)) return;
-
-  // Evita duplicados por sesión/navegador
-  const onceKey = `qr_ping_${k}`;
-  if (sessionStorage.getItem(onceKey)) return;
-  sessionStorage.setItem(onceKey, String(Date.now()));
-
-  // Parámetros a enviar
-  const p = new URLSearchParams({
-    k: String(k),
-    lugar: MAP[k],
-    u: location.href,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
-    w: String(screen.width),
-    h: String(screen.height),
-    t: String(Date.now()) // anti-cache
-  });
-
-  // URL de tu NAS (puerto externo correcto)
-  const url = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo";
-
-  // Pixel 1×1 (GET). Responde con GIF inmediato y no bloquea la carga de la página.
-  const img = new Image(1,1);
-  //img.referrerPolicy = "no-referrer";
-  img.src = url + "&" + p.toString();
-  // Insertarlo asegura la carga en navegadores más restrictivos
-  img.style.position = "absolute";
-  img.style.left = "-9999px";
-  img.style.top = "-9999px";
-  document.body.appendChild(img);
-});
-</script>
-  
 <script>
    
   // Alternancia de imágenes cada segundo
@@ -190,6 +195,7 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
+
 
 
 
