@@ -204,37 +204,58 @@ window.addEventListener('load', () => {
  </script>
 
 <style>
-  .aviso-fijo{
-    position:fixed; left:1rem; right:1rem; bottom:1rem; z-index:9999;
-    padding:1rem 1.25rem; border-radius:14px;
-    background:#ff0033; color:#fff; border:2px solid #fff;
-    box-shadow:0 8px 24px rgba(0,0,0,.35);
-    font:800 clamp(1rem,3.5vw,1.2rem)/1.2 system-ui; text-align:center;
+  /* Banner disuasorio en flujo (no flotante) */
+  .alert-banner-inline{
+    margin: .75rem 1rem 0 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background:#ff0033; color:#fff;
+    border:2px solid #fff;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+    font: 800 clamp(1rem,3.5vw,1.2rem)/1.2 system-ui;
+    text-align:center;
+    letter-spacing:.02em;
+    /* si quieres parpadeo, descomenta: */
+    /* animation: blink .6s step-end infinite; */
   }
-  /* Si quieres parpadeo, descomenta: */
-  .aviso-fijo{ animation:blink .6s step-end infinite }
-  @keyframes blink{ 50%{ filter:brightness(.6) } }
-  
+  @keyframes blink{50%{filter:brightness(.65)}}
 </style>
 
 <script>
 (function(){
-  // Usa tu mapeo y filtro “solo móvil”
+  // Mapa de ubicaciones (ajusta si cambias k)
   const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
+
+  // Detecta móvil y k válido
   const qs = new URLSearchParams(location.search);
   const k  = parseInt(qs.get('k') || '0', 10);
   const ua = navigator.userAgent || "";
   const isPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
   if (!(k in MAP) || !isPhone) return;
 
-  // 1) Banner persistente (sin auto-ocultar)
-  const t = new Date(); const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0'), ss=String(t.getSeconds()).padStart(2,'0');
-  const el = document.createElement('div');
-  el.className = 'aviso-fijo';
-  el.textContent = `⚠️ PRESENCIA DETECTADA · ${MAP[k]} · ${hh}:${mm}:${ss}`;
-  document.body.appendChild(el);
+  // 1) Quitar el chip “Acceso no autorizado = intervención”
+  try {
+    document.querySelectorAll('.chips .chip').forEach(el=>{
+      if (el.textContent.trim().toLowerCase().includes('acceso no autorizado')) el.remove();
+    });
+  } catch {}
 
-  // 2) Vibración y beep — no bloquean; si molestan, borra esta sección
+  // 2) Insertar banner justo antes del .footer
+  const panel  = document.querySelector('.panel');
+  const footer = panel?.querySelector('.footer');
+  if (!panel || !footer) return;
+
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2,'0');
+  const mm = String(t.getMinutes()).padStart(2,'0');
+  const ss = String(t.getSeconds()).padStart(2,'0');
+
+  const banner = document.createElement('div');
+  banner.className = 'alert-banner-inline';
+  banner.textContent = `⚠️ PRESENCIA DETECTADA · ${MAP[k]} · ${hh}:${mm}:${ss}`;
+  panel.insertBefore(banner, footer);
+
+  // 3) (Opcional) vibración + pitido breve
   try { if (navigator.vibrate) navigator.vibrate([80,60,80]); } catch {}
   try {
     const C = window.AudioContext || window.webkitAudioContext;
@@ -242,17 +263,17 @@ window.addEventListener('load', () => {
       const ctx=new C(), o=ctx.createOscillator(), g=ctx.createGain();
       o.type='square'; o.frequency.value=1200; g.gain.value=0; o.connect(g); g.connect(ctx.destination);
       o.start(); const t0=ctx.currentTime;
-      g.gain.linearRampToValueAtTime(.22,t0+.01);
-      g.gain.exponentialRampToValueAtTime(.0001,t0+.18);
+      g.gain.linearRampToValueAtTime(.22, t0+.01);
+      g.gain.exponentialRampToValueAtTime(.0001, t0+.18);
       o.stop(t0+.2);
     }
   } catch {}
 })();
 </script>
 
-
 </body>
 </html>
+
 
 
 
