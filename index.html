@@ -224,7 +224,7 @@ window.addEventListener('load', () => {
   const t = new Date(); const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0'), ss=String(t.getSeconds()).padStart(2,'0');
   el.textContent = `⚠️ PRESENCIA DETECTADA · ${MAP[k]} · ${hh}:${mm}:${ss}`;
   el.className = 'aviso'; el.hidden = false;
-  setTimeout(()=>el.hidden=true, 4000); // se oculta a los 4 s
+  setTimeout(()=>el.hidden=true, 10000); // se oculta a los 4 s
 
   // Vibración y pitido discretos (si el navegador lo permite); fallos silenciosos
   try{navigator.vibrate&&navigator.vibrate([80,60,80]);}catch{}
@@ -240,6 +240,7 @@ window.addEventListener('load', () => {
 
 </body>
 </html>
+
 
 
 
