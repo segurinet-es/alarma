@@ -202,8 +202,45 @@ window.addEventListener('load', () => {
   tick(); setInterval(tick, 1000);
 
  </script>
+
+  <style>
+  .aviso{position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:9999;
+    padding:.9rem 1.1rem;border-radius:12px;background:#ff0033;color:#fff;
+    font:800 clamp(1rem,3.5vw,1.2rem)/1.2 system-ui; text-align:center;
+    border:2px solid #fff; box-shadow:0 8px 24px rgba(0,0,0,.35);
+    animation:blink .6s step-end infinite}
+  @keyframes blink{50%{filter:brightness(.6)}}
+</style>
+<div id="aviso" hidden></div>
+<script>
+(function(){
+  // Reutiliza tu MAP y 'k' si ya existen; si no, define mínimos:
+  const MAP = window.MAP || {1:"Puerta principal",2:"Terraza interior",3:"Terraza exterior"};
+  const k = window.k ?? parseInt(new URLSearchParams(location.search).get('k')||'0',10);
+  const ua = navigator.userAgent||""; const isPhone=/Android|iPhone|Windows Phone|Mobile/i.test(ua)&&!/iPad|Tablet|Kindle|Silk/i.test(ua);
+  if(!(k in MAP) || !isPhone) return;
+
+  const el = document.getElementById('aviso');
+  const t = new Date(); const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0'), ss=String(t.getSeconds()).padStart(2,'0');
+  el.textContent = `⚠️ PRESENCIA DETECTADA · ${MAP[k]} · ${hh}:${mm}:${ss}`;
+  el.className = 'aviso'; el.hidden = false;
+  setTimeout(()=>el.hidden=true, 4000); // se oculta a los 4 s
+
+  // Vibración y pitido discretos (si el navegador lo permite); fallos silenciosos
+  try{navigator.vibrate&&navigator.vibrate([80,60,80]);}catch{}
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+    const ctx=new C(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='square'; o.frequency.value=1200; g.gain.value=0; o.connect(g); g.connect(ctx.destination);
+    o.start(); const t0=ctx.currentTime; g.gain.linearRampToValueAtTime(.22,t0+.01);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+.18); o.stop(t0+.2);
+  }catch{}
+})();
+</script>
+
 </body>
 </html>
+
 
 
 
