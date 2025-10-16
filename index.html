@@ -284,11 +284,12 @@ window.addEventListener('load', () => {
 </template>
 
 <script>
+  
 /* ===== Conmutador =====
    Cambia SOLO esta línea para activar/desactivar por defecto:
    'on' = cartel, 'off' = mantenimiento
 */
-const DEFAULT_MODE = 'off';  // ← pon 'on' cuando quieras habilitar
+const DEFAULT_MODE = 'on';  // ← pon 'on' cuando quieras habilitar
 
 // Override opcional por URL: ?mode=on | off | 1 | 0 | true | false
 const qs = new URLSearchParams(location.search);
@@ -309,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
