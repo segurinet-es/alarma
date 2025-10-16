@@ -90,7 +90,18 @@
 </style>
 </head>
 <body>
+<!-- ======= VISTA: MODO MANTENIMIENTO ======= -->
+<template id="tpl-mantenimiento">
+  <div class="center">
+    <div class="box">
+      <p class="title">Página en construcción</p>
+      <p class="sub">Temporalmente deshabilitada.</p>
+    </div>
+  </div>
+</template>
 
+<!-- ======= VISTA: CARTEL DE ALARMA ======= -->
+<template id="tpl-alarma">
 <script>
 // Oculta hasta validar (opcional)
 document.documentElement.style.visibility = "hidden";
@@ -154,7 +165,7 @@ window.addEventListener('load', () => {
           <img id="sentinela" src="img/alarma-on.png" alt="Indicador óptico de sistema activo">
         </div>
         <div class="titles">
-          <h1>BIVIENDA PROTEGIDA</h1>
+          <h1>VIVIENDA PROTEGIDA</h1>
           <p class="sub">Alarma conectada con aviso automático a fuerzas de seguridad</p>
         </div>
       </div>
@@ -270,9 +281,35 @@ window.addEventListener('load', () => {
   } catch {}
 })();
 </script>
+</template>
+
+<script>
+/* ===== Conmutador =====
+   Cambia SOLO esta línea para activar/desactivar por defecto:
+   'on' = cartel, 'off' = mantenimiento
+*/
+const DEFAULT_MODE = 'off';  // ← pon 'on' cuando quieras habilitar
+
+// Override opcional por URL: ?mode=on | off | 1 | 0 | true | false
+const qs = new URLSearchParams(location.search);
+const raw = (qs.get('mode') || '').trim().toLowerCase();
+const normalized = raw === '1' || raw === 'true' || raw === 'on' ? 'on'
+                 : raw === '0' || raw === 'false' || raw === 'off' ? 'off'
+                 : '';
+
+const effective = normalized || DEFAULT_MODE;       // prioridad al parámetro
+const showAlarm = (effective === 'on');
+
+// Renderizar la vista seleccionada
+document.addEventListener('DOMContentLoaded', () => {
+  const tpl = document.getElementById(showAlarm ? 'tpl-alarma' : 'tpl-mantenimiento');
+  document.body.replaceChildren(tpl.content.cloneNode(true));
+});
+</script>
 
 </body>
 </html>
+
 
 
 
