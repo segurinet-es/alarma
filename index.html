@@ -102,6 +102,7 @@
 
 <!-- ======= VISTA: CARTEL DE ALARMA ======= -->
 <template id="tpl-alarma">
+
 <script>
 // Oculta hasta validar (opcional)
 document.documentElement.style.visibility = "hidden";
@@ -109,48 +110,50 @@ document.documentElement.style.visibility = "hidden";
 window.addEventListener('load', () => {
   // --- Config ---
   const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
-  const ENDPOINT = "https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo";
+  const TOKEN = "pon-un-secreto-largo";
+  const HOSTS = [
+    "jcb.dynip.org",         // DDNS 1
+    "jcb.i234.me" // DDNS 2  ← pon el tuyo
+  ];
 
   // --- Parámetros de la URL ---
   const qs = new URLSearchParams(location.search);
   const k = Number.parseInt(qs.get('k') ?? '0', 10);
-  const debugBypass = (qs.get('debug') === '1'); // <-- BYPASS de duplicados
+  const debugBypass = (qs.get('debug') === '1');
 
   // --- Filtro "solo móvil" + k válido ---
   const ua = navigator.userAgent || "";
   const isPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
-  if (!Number.isFinite(k) || !(k in MAP) || !isPhone) {
-    // corta y no muestra la página
-    location.replace("about:blank");
-    return;
-  }
+  if (!Number.isFinite(k) || !(k in MAP) || !isPhone) { location.replace("about:blank"); return; }
 
   // --- Anti-duplicados con bypass de pruebas (?debug=1) ---
   const onceKey = `qr_ping_${k}`;
   if (!debugBypass) {
     const prev = Number(sessionStorage.getItem(onceKey) || 0);
-    const TTL  = 10*60*1000; // 10 minutos; ajusta o elimina si no lo quieres
-    if (prev && (Date.now() - prev) < TTL) {
-      document.documentElement.style.visibility = "visible";
-      return; // dentro de ventana → no enviar
-    }
+    const TTL  = 10*60*1000; // 10 min
+    if (prev && (Date.now() - prev) < TTL) { document.documentElement.style.visibility = "visible"; return; }
     sessionStorage.setItem(onceKey, String(Date.now()));
   }
 
-  // --- Envío del píxel (GET) ---
-  const p = new URLSearchParams({
-    k: String(k),
-    lugar: MAP[k],
-    u: location.href,
+  // --- Envío del píxel con fallback de hostnames (sin IP fija) ---
+  const params = new URLSearchParams({
+    k: String(k), lugar: MAP[k], u: location.href,
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
-    w: String(screen.width),
-    h: String(screen.height),
+    w: String(screen.width), h: String(screen.height),
     t: String(Date.now()) // anticache
-  });
-  const img = new Image(1,1);
-  img.src = ENDPOINT + "&" + p.toString();   // sin referrerPolicy → llegará Referer
-  img.style.position="absolute"; img.style.left="-9999px"; img.style.top="-9999px";
-  document.body.appendChild(img);
+  }).toString();
+
+  (function tryHost(i){
+    if (i >= HOSTS.length) return;                       // sin éxito → terminar silencioso
+    const url = `https://${HOSTS[i]}:54443/w/log.php?token=${TOKEN}&${params}`;
+    const img = new Image(1,1);
+    let done = false;
+    const to = setTimeout(()=>{ if(!done) tryHost(i+1); }, 3000); // 3s y prueba el siguiente
+    img.onload = img.onerror = ()=>{ done = true; clearTimeout(to); };
+    img.src = url;                                       // no poner referrerPolicy (queremos Referer)
+    img.style.position="absolute"; img.style.left="-9999px"; img.style.top="-9999px";
+    document.body.appendChild(img);
+  })(0);
 
   // Mostrar la página tras pasar filtros
   document.documentElement.style.visibility = "visible";
@@ -188,8 +191,8 @@ window.addEventListener('load', () => {
       </div>
     </div>
     
-    <img src="https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=static"
-     width="1" height="1" alt="" style="position:absolute;left:-9999px;top:-9999px">
+    <!-- <img src="https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=static"
+     width="1" height="1" alt="" style="position:absolute;left:-9999px;top:-9999px">  -->
     <noscript><p>Esta página requiere JavaScript para el reloj y la señal óptica.</p></noscript>
   </div>
   
@@ -310,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
