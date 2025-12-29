@@ -1,28 +1,22 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <!-- <meta name="referrer" content="no-referrer"> -->
-  <meta http-equiv="cache-control" content="no-store">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Abriendo documento…</title>
-</head>
-<body>
-Abriendo documento…
 <script>
-  const MEGA = "https://mega.nz/file/L4AlmCaZ#N_Se0fDK42sZRgWvEuly7Z4TbpXxdCjd9EzM28J106g";
+  const qs = new URLSearchParams(location.search);
+
+  const MEGA = qs.get("mega");              // URL MEGA
+  const TO   = qs.get("to") || "DESCONOCIDO";
+
+  if (!MEGA) {
+    document.body.innerText = "Enlace no válido.";
+    throw new Error("Falta parámetro mega");
+  }
 
   const img = new Image();
   img.src =
     "https://jcb.dynip.org:54443/w/log.php"
     + "?token=pon-un-secreto-largo"
     + "&k=9"
-    + "&to=MINGUELA"
+    + "&to=" + encodeURIComponent(TO)
     + "&u=" + encodeURIComponent(location.href)
     + "&_=" + Date.now();
 
-  // espera 2 segundos antes de ir a MEGA (para que dé tiempo al aviso)
-  setTimeout(() => location.replace(MEGA), 1000);
+  setTimeout(() => location.replace(MEGA), 1500);
 </script>
-</body>
-</html>
