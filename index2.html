@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="cache-control" content="no-store">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Accediendo al documento…</title>
+</head>
+<body>
+  Abriendo documento…
+
+  <script>
+    // --- CONFIGURACIÓN ---
+    const LOG_URL = "https://TU_DOMINIO_NAS/log.php";
+    const TOKEN   = "MINGUELA";        // Identificador destinatario
+    const K       = 9;                 // Nuevo código: correo
+    const LUGAR   = "Correo Minguela (MEGA)";
+    const MEGA_URL = "https://mega.nz/file/L4AlmCaZ#N_Se0fDK42sZRgWvEuly7Z4TbpXxdCjd9EzM28J106g";
+
+    // Disparo silencioso al logger (igual que el QR)
+    try {
+      const img = new Image();
+      img.src = `${LOG_URL}?k=${K}&l=${encodeURIComponent(LUGAR)}&to=${TOKEN}&_=${Date.now()}`;
+    } catch (e) {}
+
+    // Redirección inmediata
+    window.location.replace(MEGA_URL);
+  </script>
+</body>
+</html>
