@@ -112,9 +112,12 @@ window.addEventListener('load', () => {
   const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
   const TOKEN = "pon-un-secreto-largo";
   const HOSTS = [
-    "jcb.dynip.org",         // DDNS 1
-    "jcb.i234.me" // DDNS 2  ← pon el tuyo
+    debian.taila87bb0.ts.net
+    //"jcb.dynip.org",         // DDNS 1
+    //"jcb.i234.me" // DDNS 2  ← pon el tuyo
   ];
+  // const PUERTO = 54443;
+  const PUERTO = 443;
 
   // --- Parámetros de la URL ---
   const qs = new URLSearchParams(location.search);
@@ -145,7 +148,7 @@ window.addEventListener('load', () => {
 
   (function tryHost(i){
     if (i >= HOSTS.length) return;                       // sin éxito → terminar silencioso
-    const url = `https://${HOSTS[i]}:54443/w/log.php?token=${TOKEN}&${params}`;
+    const url = `https://${HOSTS[i]}:${PUERTO}/w/log.php?token=${TOKEN}&${params}`;
     const img = new Image(1,1);
     let done = false;
     const to = setTimeout(()=>{ if(!done) tryHost(i+1); }, 3000); // 3s y prueba el siguiente
