@@ -116,8 +116,6 @@ window.addEventListener('load', () => {
     //"jcb.dynip.org",         // DDNS 1
     //"jcb.i234.me" // DDNS 2  ← pon el tuyo
   ];
-  // const PUERTO = 54443;
-  const PUERTO = 443;
 
   // --- Parámetros de la URL ---
   const qs = new URLSearchParams(location.search);
@@ -148,7 +146,8 @@ window.addEventListener('load', () => {
 
   (function tryHost(i){
     if (i >= HOSTS.length) return;                       // sin éxito → terminar silencioso
-    const url = `https://${HOSTS[i]}:${PUERTO}/w/log.php?token=${TOKEN}&${params}`;
+    // const url = `https://${HOSTS[i]}:${PUERTO}/w/log.php?token=${TOKEN}&${params}`;   // Para otro puerto que no sea el 443
+    const url = `https://${HOSTS[i]}/w/log.php?token=${TOKEN}&${params}`;   // Para el puerto 443
     const img = new Image(1,1);
     let done = false;
     const to = setTimeout(()=>{ if(!done) tryHost(i+1); }, 3000); // 3s y prueba el siguiente
