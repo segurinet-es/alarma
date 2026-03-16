@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vivienda Protegida — Aviso</title>
+<style>
+  /* Base tipográfica fluida (todo lo demás escala en em) */
+  html{
+    font-size: clamp(14px, 1.5vw, 18px);
+    -webkit-text-size-adjust: 100%;
+  }
+  :root{
+    --azul:#0f2743; --blanco:#fff; --bg:#0b1524; --acento:#c62828;
+  }
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--blanco);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;}
+
+  /* Lienzo a pantalla completa */
+  .page{
+    min-height:100vh; width:100vw; display:flex; align-items:center; justify-content:center;
+    padding:2rem; box-sizing:border-box;
+  }
+
+  /* Panel responsivo: límites superiores/inferiores y uso de viewport */
+  .panel{
+    width: min(96vw, 1200px);
+    height: min(92vh, 1000px);
+    background:var(--azul); border-radius:1.2rem; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    border:1px solid rgba(255,255,255,.08);
+    display:grid; grid-template-rows:auto 1fr auto;
+  }
+
+  .header, .footer{padding:1rem 1.25rem; background:rgba(255,255,255,.04)}
+  .header{display:flex; gap:1rem; align-items:center; flex-wrap:wrap}
+
+  /* Icono: escala con vmin y tiene límites con clamp */
+  .icon{
+    flex:0 0 auto;
+    width: clamp(7rem, 18vmin, 14rem);
+    height: clamp(7rem, 18vmin, 14rem);
+    display:grid; place-items:center;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+    border-radius:1rem; overflow:hidden;
+    animation:halo 2s infinite linear;
+  }
+  .icon img{width:85%; height:auto; display:block}
+
+  @keyframes halo{
+    0%{box-shadow:0 0 0 0 rgba(198,40,40,.28)}
+    50%{box-shadow:0 0 0 1.2rem rgba(198,40,40,0)}
+    100%{box-shadow:0 0 0 0 rgba(198,40,40,0)}
+  }
+
+  .titles{min-width: 14rem; flex:1}
+  h1{margin:0 0 .25rem; font-size: clamp(1.6rem, 4.5vw, 3rem); letter-spacing:.02em}
+  .sub{margin:0; opacity:.92; font-size: clamp(1rem, 2.6vw, 1.35rem)}
+
+  .body{
+    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1rem;
+    padding:1.25rem;
+  }
+
+  .band{
+    width:100%; background:var(--blanco); color:#0d2238; padding:.8rem 1rem; 
+    display:flex; justify-content:space-between; align-items:center; gap:.8rem;
+    font-weight:700; letter-spacing:.02em;
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  }
+
+  .chips{display:flex; flex-wrap:wrap; gap:.6rem; justify-content:center}
+  .chip{
+    background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18);
+    padding:.5rem .75rem; border-radius:999px; 
+    font-size: clamp(.9rem, 2.2vw, 1.05rem);
+  }
+  .reloj{font-variant-numeric:tabular-nums; font-weight:700}
+
+  .footer{
+    font-size: clamp(.9rem, 1.8vw, 1rem); color:#cdd7e7;
+  }
+
+  /* Adaptaciones extra en pantallas muy estrechas */
+  @media (max-width: 520px){
+    .page{padding:1rem}
+    .panel{height: auto; min-height: 90vh}
+    .band{flex-direction:column; text-align:center}
+  }
+</style>
+</head>
+<body>
+<!-- ======= VISTA: MODO MANTENIMIENTO ======= -->
+<template id="tpl-mantenimiento">
+  <div class="center">
+    <div class="box">
+      <p class="title">Página en construcción</p>
+      <p class="sub">Temporalmente deshabilitada.</p>
+    </div>
+  </div>
+</template>
+
+<!-- ======= VISTA: CARTEL DE ALARMA ======= -->
+<template id="tpl-alarma">
+
+<script>
+// Oculta hasta validar (opcional)
+document.documentElement.style.visibility = "hidden";
+
+window.addEventListener('load', () => {
+  // --- Config ---
+  const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
+  const TOKEN = "pon-un-secreto-largo";
+  const HOSTS = [
+    "jcb.dynip.org",         // DDNS 1
+    "jcb.i234.me" // DDNS 2  ← pon el tuyo
+  ];
+
+  // --- Parámetros de la URL ---
+  const qs = new URLSearchParams(location.search);
+  const k = Number.parseInt(qs.get('k') ?? '0', 10);
+  const debugBypass = (qs.get('debug') === '1');
+
+  // --- Filtro "solo móvil" + k válido ---
+  const ua = navigator.userAgent || "";
+  const isPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
+  if (!Number.isFinite(k) || !(k in MAP) || !isPhone) { location.replace("about:blank"); return; }
+
+  // --- Anti-duplicados con bypass de pruebas (?debug=1) ---
+  const onceKey = `qr_ping_${k}`;
+  if (!debugBypass) {
+    const prev = Number(sessionStorage.getItem(onceKey) || 0);
+    const TTL  = 10*60*1000; // 10 min
+    if (prev && (Date.now() - prev) < TTL) { document.documentElement.style.visibility = "visible"; return; }
+    sessionStorage.setItem(onceKey, String(Date.now()));
+  }
+
+  // --- Envío del píxel con fallback de hostnames (sin IP fija) ---
+  const params = new URLSearchParams({
+    k: String(k), lugar: MAP[k], u: location.href,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+    w: String(screen.width), h: String(screen.height),
+    t: String(Date.now()) // anticache
+  }).toString();
+
+  (function tryHost(i){
+    if (i >= HOSTS.length) return;                       // sin éxito → terminar silencioso
+    const url = `https://${HOSTS[i]}:54443/w/log.php?token=${TOKEN}&${params}`;
+    const img = new Image(1,1);
+    let done = false;
+    const to = setTimeout(()=>{ if(!done) tryHost(i+1); }, 3000); // 3s y prueba el siguiente
+    img.onload = img.onerror = ()=>{ done = true; clearTimeout(to); };
+    img.src = url;                                       // no poner referrerPolicy (queremos Referer)
+    img.style.position="absolute"; img.style.left="-9999px"; img.style.top="-9999px";
+    document.body.appendChild(img);
+  })(0);
+
+  // Mostrar la página tras pasar filtros
+  document.documentElement.style.visibility = "visible";
+});
+</script>
+
+  <div class="page">
+    <div class="panel">
+      <div class="header">
+        <div class="icon">
+          <!-- Sustituye por tus dos imágenes -->
+          <img id="sentinela" src="img/alarma-on.png" alt="Indicador óptico de sistema activo">
+        </div>
+        <div class="titles">
+          <h1>VIVIENDA PROTEGIDA</h1>
+          <p class="sub">Alarma conectada con aviso automático a fuerzas de seguridad</p>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="band">
+          <span>PERÍMETRO VIGILADO</span>
+          <span>Registro de eventos · Respuesta inmediata</span>
+        </div>
+
+        <div class="chips">
+          <span class="chip">Estado: <b>Vigilancia activa</b></span>
+          <span class="chip">Última comprobación: <span id="clock" class="reloj">--:--:--</span></span>
+          <span class="chip">Acceso no autorizado = intervención</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        Manipular cerramientos o dispositivos desencadena alertas y apertura de expediente con evidencias temporales y visuales.
+      </div>
+    </div>
+    
+    <!-- <img src="https://jcb.dynip.org:54443/w/log.php?token=pon-un-secreto-largo&t=static"
+     width="1" height="1" alt="" style="position:absolute;left:-9999px;top:-9999px">  -->
+    <noscript><p>Esta página requiere JavaScript para el reloj y la señal óptica.</p></noscript>
+  </div>
+  
+<script>
+   
+  // Alternancia de imágenes cada segundo
+  const imgOn  = "img/alarma-on.png";
+  const imgOff = "img/alarma-off.png";
+  const visor  = document.getElementById("sentinela");
+  let flip = false;
+  setInterval(()=>{ flip = !flip; visor.src = flip ? imgOn : imgOff; }, 1000);
+  visor.addEventListener("error", ()=>{ visor.alt = "Imagen indicadora no disponible"; });
+
+  // Reloj en vivo (hora local)
+  const clock = document.getElementById("clock");
+  function tick(){
+    clock.textContent = new Intl.DateTimeFormat("es-ES", {
+      hour:"2-digit", minute:"2-digit", second:"2-digit"
+    }).format(new Date());
+  }
+  tick(); setInterval(tick, 1000);
+
+ </script>
+
+<style>
+  /* Banner disuasorio en flujo (no flotante) */
+  .alert-banner-inline{
+    margin: .75rem 1rem 0 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background:#ff0033; color:#fff;
+    border:2px solid #fff;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+    font: 800 clamp(1rem,3.5vw,1.2rem)/1.2 system-ui;
+    text-align:center;
+    letter-spacing:.02em;
+    /* si quieres parpadeo, descomenta: */
+    animation: blink .6s step-end infinite;
+  }
+  @keyframes blink{50%{filter:brightness(.65)}}
+</style>
+
+<script>
+(function(){
+  // Mapa de ubicaciones (ajusta si cambias k)
+  const MAP = {1:"Puerta principal", 2:"Terraza interior", 3:"Terraza exterior"};
+
+  // Detecta móvil y k válido
+  const qs = new URLSearchParams(location.search);
+  const k  = parseInt(qs.get('k') || '0', 10);
+  const ua = navigator.userAgent || "";
+  const isPhone = /Android|iPhone|Windows Phone|Mobile/i.test(ua) && !/iPad|Tablet|Kindle|Silk/i.test(ua);
+  if (!(k in MAP) || !isPhone) return;
+
+  // 1) Quitar el chip “Acceso no autorizado = intervención”
+  try {
+    document.querySelectorAll('.chips .chip').forEach(el=>{
+      if (el.textContent.trim().toLowerCase().includes('acceso no autorizado')) el.remove();
+    });
+  } catch {}
+
+  // 2) Insertar banner justo antes del .footer
+  const panel  = document.querySelector('.panel');
+  const footer = panel?.querySelector('.footer');
+  if (!panel || !footer) return;
+
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2,'0');
+  const mm = String(t.getMinutes()).padStart(2,'0');
+  const ss = String(t.getSeconds()).padStart(2,'0');
+
+  const banner = document.createElement('div');
+  banner.className = 'alert-banner-inline';
+  banner.textContent = `⚠️ PRESENCIA DETECTADA · ${MAP[k]} · ${hh}:${mm}:${ss}`;
+  panel.insertBefore(banner, footer);
+
+  // 3) (Opcional) vibración + pitido breve
+  try { if (navigator.vibrate) navigator.vibrate([80,60,80]); } catch {}
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (C) {
+      const ctx=new C(), o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='square'; o.frequency.value=1200; g.gain.value=0; o.connect(g); g.connect(ctx.destination);
+      o.start(); const t0=ctx.currentTime;
+      g.gain.linearRampToValueAtTime(.22, t0+.01);
+      g.gain.exponentialRampToValueAtTime(.0001, t0+.18);
+      o.stop(t0+.2);
+    }
+  } catch {}
+})();
+</script>
+</template>
+
+<script>
+  
+/* ===== Conmutador =====
+   Cambia SOLO esta línea para activar/desactivar por defecto:
+   'on' = cartel, 'off' = mantenimiento
+*/
+const DEFAULT_MODE = 'on';  // ← pon 'on' cuando quieras habilitar
+
+// Override opcional por URL: ?mode=on | off | 1 | 0 | true | false
+const qs = new URLSearchParams(location.search);
+const raw = (qs.get('mode') || '').trim().toLowerCase();
+const normalized = raw === '1' || raw === 'true' || raw === 'on' ? 'on'
+                 : raw === '0' || raw === 'false' || raw === 'off' ? 'off'
+                 : '';
+
+const effective = normalized || DEFAULT_MODE;       // prioridad al parámetro
+const showAlarm = (effective === 'on');
+
+// Renderizar la vista seleccionada
+document.addEventListener('DOMContentLoaded', () => {
+  const tpl = document.getElementById(showAlarm ? 'tpl-alarma' : 'tpl-mantenimiento');
+  document.body.replaceChildren(tpl.content.cloneNode(true));
+});
+</script>
+
+</body>
+</html>
